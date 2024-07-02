@@ -45,16 +45,18 @@ public class CurrencyRateServiceImpl implements CurrencyRateService {
                 .orElseThrow(CurrencyCodeNotFoundException::new);
     }
 
-    private List<Rate> getListRatesByDate(String date) {
+    @Override
+    public List<Rate> getListRatesByDate(String date) {
         if(checkExistListRatesByDate(date)){
             return currencyRateRepository.findByDate(date);
         } else {
-            return saveAndReturn(date);
+            return saveInDb(getCurrencyListFromApiBank(date));
         }
     }
 
-    private List<Rate> saveAndReturn(String date) {
-        return Stream.of(getCurrencyList(date))
+    @Override
+    public List<Rate> saveInDb(RateResponse[] rateResponses) {
+        return Stream.of(rateResponses)
                 .map(rateCreateMapper::map)
                 .map(currencyRateRepository::save)
                 .toList();
@@ -65,7 +67,7 @@ public class CurrencyRateServiceImpl implements CurrencyRateService {
         return !currencyRateRepository.findByDate(date).isEmpty();
     }
 
-    private RateResponse[] getCurrencyList(String date) {
+    private RateResponse[] getCurrencyListFromApiBank(String date) {
         String onDate = "";
         if (date != null && !date.isEmpty() && !date.trim().isEmpty()) {
             onDate = "ondate=" + date + "&";
